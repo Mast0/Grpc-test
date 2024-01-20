@@ -12,6 +12,7 @@ namespace GrpcService
 		private const int JWT_TOKEN_VALIDITY = 30;
 		public static AuthenticationResponse Authenticate(User user)
 		{
+			// selection of user role
 			string userRole;
 			if (user.Role == 0)
 			{
@@ -26,24 +27,30 @@ namespace GrpcService
 				userRole = string.Empty;
 			}
 
+			// create list of claims
 			List<Claim> claims = new List<Claim> 
 			{
 				new Claim(ClaimTypes.Name, user.Name),
 				new Claim(ClaimTypes.Role, userRole)
 			};
 
+			// create symmetric security key
 			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWT_TOKEN_KEY));
 
+			// create credentials
 			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
+			// set token expiry date
 			var tokenExpiryDateTime = DateTime.Now.AddMinutes(JWT_TOKEN_VALIDITY);
 
+			// create new token
 			var token = new JwtSecurityToken(
 				claims: claims,
 				expires: tokenExpiryDateTime,
 				signingCredentials: creds
 				);
 
+			// create access token
 			var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
 
 			return new AuthenticationResponse
