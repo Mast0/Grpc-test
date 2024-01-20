@@ -2,10 +2,23 @@ syntax = "proto3";
 
 option csharp_namespace = "GrpcService";
 
+import "google/api/annotations.proto";
+
 package authentication;
 
 service Authentication {
-  rpc Authenticate (AuthenticationRequest) returns (AuthenticationResponse);
+  rpc Authenticate (AuthenticationRequest) returns (AuthenticationResponse){
+	  option (google.api.http) = {
+		  get: "/api/login"
+		  body: "*"
+	  };
+  }
+  rpc Register (RegisterRequest) returns (RegisterResponse){
+	  option (google.api.http) = {
+		  post: "/api/register"
+		  body: "*"
+	  };
+  }
 }
 
 message AuthenticationRequest{
@@ -17,4 +30,12 @@ message AuthenticationResponse{
 	string AccessToken = 1;
 	int32 ExpiresIn = 2;
 }
+
+message RegisterRequest{
+	string UserName = 1;
+	string Password = 2;
+	int32 Role = 3;
+}
+
+message RegisterResponse {}
 

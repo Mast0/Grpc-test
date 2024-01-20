@@ -1,5 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using Microsoft.Win32.SafeHandles;
+﻿using GrpcService.Models;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -8,33 +8,47 @@ namespace GrpcService
 {
 	public static class JwtAuthenticationManager
 	{
-		public const string JWT_TOKEN_KEY = "Mast65838932731";
+		public const string JWT_TOKEN_KEY = "qO*L>m~w2g8tAz$`u!r#D+vF;6cH0ZJxRnPbUydkL9:i'W,7eBhY3Q1{XV]C4}f.TK^ISl5Eo%N&";
 		private const int JWT_TOKEN_VALIDITY = 30;
-		public static AuthenticationResponse Authenticate(AuthenticationRequest req)
+		public static AuthenticationResponse Authenticate(User user)
 		{
-			if (req.UserName != "admin" || req.Password != "admin")
-				return null;
-
-			var jwtSecurityTikenHandler = new JwtSecurityTokenHandler();
-			var tokenKey = Encoding.ASCII.GetBytes(JWT_TOKEN_KEY);
-			var tokenExpiryDateTime = DateTime.Now.AddMinutes(JWT_TOKEN_VALIDITY);
-			var securityTokenDescriptor = new SecurityTokenDescriptor
+			string userRole;
+			if (user.Role == 0)
 			{
-				Subject = new System.Security.Claims.ClaimsIdentity(new List<Claim>
-				{
-					new Claim("username", req.UserName),
-					new Claim(ClaimTypes.Role, "Administrator")
-				}),
-				Expires = tokenExpiryDateTime,
-				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+				userRole = "Administrator";
+			}
+            else if (user.Role == 1)
+            {
+				userRole = "User";
+            }
+			else
+			{
+				userRole = string.Empty;
+			}
+
+			List<Claim> claims = new List<Claim> 
+			{
+				new Claim(ClaimTypes.Name, user.Name),
+				new Claim(ClaimTypes.Role, userRole)
 			};
 
-			var securityToken = jwtSecurityTikenHandler.CreateToken(securityTokenDescriptor);
-			var token = jwtSecurityTikenHandler.WriteToken(securityToken);
+			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWT_TOKEN_KEY));
+
+			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+			var tokenExpiryDateTime = DateTime.Now.AddMinutes(JWT_TOKEN_VALIDITY);
+
+			var token = new JwtSecurityToken(
+				claims: claims,
+				expires: tokenExpiryDateTime,
+				signingCredentials: creds
+				);
+
+			var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
 
 			return new AuthenticationResponse
 			{
-				AccessToken = token,
+				AccessToken = jwtToken,
 				ExpiresIn = (int)tokenExpiryDateTime.Subtract(DateTime.Now).Seconds
 			};
 		}
