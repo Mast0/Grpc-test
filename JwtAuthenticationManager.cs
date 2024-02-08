@@ -28,7 +28,7 @@ namespace GrpcService
 			}
 
 			// create list of claims
-			List<Claim> claims = new List<Claim> 
+			List<Claim> claims = new()
 			{
 				new Claim(ClaimTypes.Name, user.Name),
 				new Claim(ClaimTypes.Role, userRole)
